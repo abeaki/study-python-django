@@ -266,3 +266,82 @@ Post.objects.filter(published_date__lte=timezone.now())
 Post.objects.filter(published_date__lte=timezone.now()).order_by('created_date')  # 昇順
 Post.objects.filter(published_date__lte=timezone.now()).order_by('-created_date') # 降順
 ```
+
+### 静的ファイル
+
+- 静的ファイルの配置
+
+```txt
+└── blog
+    └── static
+        └── css
+            └── blog.css
+```
+
+- 静的ファイルのロード
+
+```html
+{% load static %}
+<html>
+    <head>
+        <link rel="stylesheet" href="{% static 'css/blog.css' %}">
+    </head>
+```
+
+### テンプレートの拡張
+
+- 構成
+
+```txt
+└── blog
+    └── templates
+        └── blog
+            ├── base.html
+            └── post_list.html
+```
+
+- templates/blog/base.html
+
+```html:templates/blog/base.html
+{% load static %}
+<html>
+    <head>
+        <title>Django blog</title>
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+        <link href="//fonts.googleapis.com/css?family=Lobster&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="{% static 'css/blog.css' %}">
+    </head>
+    <body>
+        <header>
+            <h1><a href="/">Django blog</a></h1>
+        </header>
+        <div class="content container">
+            <div class="row">
+                <div class="col-md-8">
+{% block content %}
+{% endblock %}
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
+```
+
+- templates/blog/post_list.html
+
+```html:templates/blog/post_list.html
+{% extends 'blog/base.html' %}
+
+{% block content %}
+    {% for post in posts %}
+                    <section class="post">
+                        <div class="date">
+                            <p>published: {{ post.published_date }}</p>
+                        </div>
+                        <h2><a href="">{{ post.title }}</a></h2>
+                        <p>{{ post.text|linebreaksbr }}</p>
+                    </section>
+    {% endfor %}
+{% endblock %}
+```
