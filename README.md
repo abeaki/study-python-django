@@ -169,3 +169,100 @@ admin.site.register(Post)
 ```bash
 python manage.py createsuperuser
 ```
+
+### viewの作成
+
+- blog/views.py
+
+```python:blog/views.py
+from django.shortcuts import render
+from django.utils import timezone
+from .models import Post
+
+def post_list(request):
+    posts = Post.objects.filter(published_date__lte=timezone.now()).order_by('published_date')
+    return render(request, 'blog/post_list.html', {'posts': posts})
+```
+
+- テンプレートの作成(blog/templates/blog/post_list.html)
+
+```html:blog/templates/blog/post_list.html
+<html>
+    <head>
+        <title>Django blog</title>
+    </head>
+    <body>
+        <header>
+            <h1><a href="/">Django blog</a></h1>
+        </header>
+{% for post in posts %}
+        <section>
+            <p>公開日: {{ post.published_date }}</p>
+            <h2><a href="">{{ post.title }}</a></h2>
+            <p>{{ post.text|linebreaksbr }}</p>
+        </section>
+{% endfor %}
+    </body>
+</html>
+```
+
+### URLの設定
+
+- アプリケーションのURLを定義(blog/urls.py)
+
+```python:blog/urls.py
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.post_list, name='post_list'),
+]
+```
+
+- アプリケーションのURLをインポート(mysite/urls.py)
+
+```python:mysite/urls.py
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('blog.urls')), # 追加
+]
+```
+
+### ORMとクエリセット
+
+- 参考 <https://docs.djangoproject.com/ja/2.2/ref/models/querysets/>
+
+- Django shellの起動
+
+```bash
+python manage.py shell
+```
+
+- オブジェクトの取得(全て)
+
+```python
+from blog.models import Post
+
+Post.objects.all()
+```
+
+- オブジェクトの作成
+
+```python
+Post.create(author=User.objects.get(username='abea'), title='Sample Title', text='Sample Text')
+```
+
+- オブジェクトの絞り込み
+
+```python
+Post.objects.filter(author=User.objects.get(username='abea'))
+Post.objects.filter(title__contains='title')
+
+from django.utils import timezone
+Post.objects.filter(published_date__lte=timezone.now())
+Post.objects.filter(published_date__lte=timezone.now()).order_by('created_date')  # 昇順
+Post.objects.filter(published_date__lte=timezone.now()).order_by('-created_date') # 降順
+```
