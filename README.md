@@ -197,7 +197,7 @@ def post_list(request):
         </header>
 {% for post in posts %}
         <section>
-            <p>公開日: {{ post.published_date }}</p>
+            <p>published: {{ post.published_date }}</p>
             <h2><a href="">{{ post.title }}</a></h2>
             <p>{{ post.text|linebreaksbr }}</p>
         </section>
@@ -343,5 +343,62 @@ Post.objects.filter(published_date__lte=timezone.now()).order_by('-created_date'
                         <p>{{ post.text|linebreaksbr }}</p>
                     </section>
     {% endfor %}
+{% endblock %}
+```
+
+#### 詳細ページを作る
+
+- テンプレートへのリンク
+  - プライマリキーを指定しなかった場合は `xxx.pk` という形式で取得可能(Djangoが自動で生成)
+
+```html:templates/blog/post_list.html
+                        <h2><a href="{% url 'post_detail' pk=post.pk %}">{{ post.title }}</a></h2>
+```
+
+- URL追加(blog/urls.py)
+
+```python:blog/urls.py
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.post_list, name='post_list'),
+    path('post/<int:pk>/', views.post_detail name='post_detail'), # 追加
+]
+```
+
+- viewの追加(blog/views.py)
+  - get_object_or_404 メソッドを利用してオブジェクトが存在しない場合は404ページに遷移するようにしている
+
+```python:blog/views.py
+from django.shortcuts import render, get_object_or_404
+from django.utils import timezone
+from .models import Post
+
+def post_list(request):
+    posts = Post.objects.filter(published_date__lte=timezone.now()).order_by('published_date')
+    return render(request, 'blog/post_list.html', {'posts': posts})
+
+# 追加
+def post_detail(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    return render(request, 'blog/post_detail.html', {'post': post})
+```
+
+- テンプレートの追加(blog/templates/blog/post_detail.html)
+
+```html:blog/templates/blog/post_detail.html
+{% extends 'blog/base.html' %}
+
+{% block content %}
+                    <section class="post">
+    {% if post.published_date %}
+                        <div class="date">
+                            <p>published: {{ post.published_date }}</p>
+                        </div>
+    {% endif %}
+                        <h2>{{ post.title }}</h2>
+                        <p>{{ post.text|linebreaksbr }}</p>
+                    </section>
 {% endblock %}
 ```
